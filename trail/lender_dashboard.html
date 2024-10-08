@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lender Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        window.onload = function() {
+            const userAccount = localStorage.getItem('userAccount');
+            if (!userAccount) {
+                alert('You are not logged in. Please log in with MetaMask.');
+                window.location.href = "login.html";
+            } else {
+                document.getElementById('accountDisplay').innerText = `Logged in as: ${userAccount}`;
+                loadLoanRequests(); // You would replace this with an actual fetch from your smart contract
+            }
+        };
+
+        function loadLoanRequests() {
+            // Simulated loan requests for the lender to see
+            const simulatedLoanRequests = [
+                { id: 1, amount: "1 ETH", purpose: "Healthcare", status: "Pending" },
+                { id: 2, amount: "0.5 ETH", purpose: "Education", status: "Approved" },
+                { id: 3, amount: "2 ETH", purpose: "Business", status: "Rejected" }
+            ];
+
+            const loanRequestsContainer = document.getElementById('loanRequests');
+            simulatedLoanRequests.forEach(request => {
+                const requestElement = document.createElement('div');
+                requestElement.innerHTML = `
+                    <h3>Loan ID: ${request.id}</h3>
+                    <p>Amount: ${request.amount}</p>
+                    <p>Purpose: ${request.purpose}</p>
+                    <p>Status: ${request.status}</p>
+                    <hr>
+                `;
+                loanRequestsContainer.appendChild(requestElement);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Lender Dashboard</h1>
+    <div id="accountDisplay"></div>
+
+    <h2>Available Loan Requests:</h2>
+    <div id="loanRequests"></div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Loan</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Ensure the user is logged in
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+        if (!isLoggedIn) {
+            // Redirect to login page if not logged in
+            window.location.href = "login.html";
+        }
+        
+        // Submit loan request function
+        function submitLoanRequest() {
+            let loanRequests = JSON.parse(localStorage.getItem('loanRequests')) || [];
+            const loanAmount = document.getElementById('loanAmount').value;
+            const duration = document.getElementById('loanDuration').value;
+            const interestRate = document.getElementById('interestRate').value;
+
+            // Create a loan request object
+            const loanRequest = {
+                id: loanRequests.length + 1,
+                amount: loanAmount,
+                duration: duration,
+                interestRate: interestRate,
+                status: 'Pending'
+            };
+
+            // Push the loan request to the array
+            loanRequests.push(loanRequest);
+            localStorage.setItem('loanRequests', JSON.stringify(loanRequests));
+            
+            // Redirect to borrower dashboard
+            window.location.href = "borrower_dashboard.html";
+        }
+    </script>
+</head>
+<body>
+    <h1>Request a Loan</h1>
+    <form id="loanRequestForm" onsubmit="event.preventDefault(); submitLoanRequest();">
+        <label for="loanAmount">Loan Amount:</label>
+        <input type="number" id="loanAmount" required><br>
+
+        <label for="loanDuration">Duration (in days):</label>
+        <input type="number" id="loanDuration" required><br>
+
+        <label for="interestRate">Interest Rate (%):</label>
+        <input type="number" id="interestRate" required><br>
+
+        <button type="submit">Submit Loan Request</button>
+    </form>
+    <a href="borrower_dashboard.html">Back to Dashboard</a>
+</body>
+</html>

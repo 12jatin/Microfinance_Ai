@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        async function connectMetaMask() {
+            if (typeof window.ethereum !== 'undefined') {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const userAccount = accounts[0];
+                localStorage.setItem('userAccount', userAccount);
+                window.location.href = "home.html"; // Redirect to home after login
+            } else {
+                alert('Please install MetaMask!');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        <button id="loginButton" onclick="connectMetaMask()">Login with MetaMask</button>
+        <p>If you don't have MetaMask, please install it from <a href="https://metamask.io/" target="_blank">MetaMask Website</a>.</p>
+    </div>
+</body>
+</html>
+

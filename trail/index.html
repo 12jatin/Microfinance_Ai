@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lending Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.0/dist/web3.min.js"></script>
+    <script>
+        let web3;
+        let loanContract;
+        const loanContractAddress = "0x23AfF63d0A795F0EabE883Cb57a137Bcdcd27c06"; // Replace with your contract's address
+        const loanContractABI = [
+        {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "borrower",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "penalty",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "LoanDefaulted",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "lender",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "LoanFunded",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "borrower",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "LoanRepaid",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "borrower",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "LoanRequested",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "loanCount",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function",
+                "constant": true
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "loans",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address payable",
+                        "name": "borrower",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address payable",
+                        "name": "lender",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "interestRate",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "duration",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "startTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "repaymentAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "repaid",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function",
+                "constant": true
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "interestRate",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "duration",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "requestLoan",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "fundLoan",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function",
+                "payable": true
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "repayLoan",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function",
+                "payable": true
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "loanId",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "checkForDefault",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+             
+        ];
+
+        window.onload = async function() {
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                await window.ethereum.enable();
+
+                loanContract = new web3.eth.Contract(loanContractABI, loanContractAddress);
+                const accounts = await web3.eth.getAccounts();
+                const userAccount = accounts[0];
+                localStorage.setItem('userAccount', userAccount);
+
+                // Hide login and show home section
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('homeSection').style.display = 'block';
+            } else {
+                alert('Please install MetaMask!');
+            }
+        };
+
+        function showSection(section) {
+            console.log("Attempting to show section:", section);
+
+            // Hide all sections first
+            const sections = ['homeSection', 'borrowerDashboard', 'lenderDashboard', 'loanRequestSection'];
+            sections.forEach(sec => {
+                document.getElementById(sec).style.display = 'none';
+                console.log(`Hiding section: ${sec}`);
+            });
+
+            // Show the requested section
+            document.getElementById(section).style.display = 'block';
+            console.log(`Showing section: ${section}`);
+
+            if (section === 'borrowerDashboard') {
+                loadBorrowerLoans(); // Load borrower's loans
+            } else if (section === 'lenderDashboard') {
+                loadLoanRequests(); // Load loan requests for lender
+            }
+        }
+
+        async function submitLoanRequest(event) {
+            event.preventDefault();
+            toggleLoader(true); // Show loader while processing
+
+            const amount = web3.utils.toWei(document.getElementById('loanAmount').value, 'ether');
+            const interestRate = document.getElementById('interestRate').value;
+            const duration = document.getElementById('loanDuration').value;
+
+            const accounts = await web3.eth.getAccounts();
+
+            try {
+                await loanContract.methods.requestLoan(amount, interestRate, duration).send({ from: accounts[0] });
+                alert('Loan Request Submitted!');
+                loadBorrowerLoans(); // Refresh borrower loans
+            } catch (error) {
+                console.error('Error submitting loan request:', error);
+                alert('Error submitting loan request. Ensure you have enough ETH for gas fees.');
+            } finally {
+                toggleLoader(false); // Hide loader after process
+            }
+        }
+
+        async function loadBorrowerLoans() {
+            const userAccount = localStorage.getItem('userAccount');
+            const loanCount = await loanContract.methods.loanCount().call();
+            const loanRequestsContainer = document.getElementById('borrowerLoanRequests');
+            loanRequestsContainer.innerHTML = ''; // Clear previous loan requests
+
+            for (let i = 1; i <= loanCount; i++) {
+                const loan = await loanContract.methods.loans(i).call();
+                if (loan.borrower === userAccount) {
+                    displayBorrowerLoan(loan);
+                }
+            }
+        }
+
+        function displayBorrowerLoan(loan) {
+            const loanRequestsContainer = document.getElementById('borrowerLoanRequests');
+            const loanElement = document.createElement('div');
+            loanElement.innerHTML = `
+                <h3>Loan ID: ${loan.id}</h3>
+                <p>Amount: ${web3.utils.fromWei(loan.amount, 'ether')} ETH</p>
+                <p>Interest Rate: ${loan.interestRate}%</p>
+                <p>Duration: ${loan.duration} months</p>
+                <p>Status: ${loan.repaid ? 'Repaid' : 'Pending'}</p>
+                <hr>
+            `;
+            loanRequestsContainer.appendChild(loanElement);
+        }
+
+        async function loadLoanRequests() {
+            const loanCount = await loanContract.methods.loanCount().call();
+            const loanRequestsContainer = document.getElementById('lenderLoanRequests');
+            loanRequestsContainer.innerHTML = ''; // Clear previous loan requests
+
+            for (let i = 1; i <= loanCount; i++) {
+                const loan = await loanContract.methods.loans(i).call();
+                if (loan.lender === '0x0000000000000000000000000000000000000000') {
+                    displayLoanRequest(loan);
+                }
+            }
+        }
+
+        function displayLoanRequest(loan) {
+            const loanRequestsContainer = document.getElementById('lenderLoanRequests');
+            const loanElement = document.createElement('div');
+            loanElement.innerHTML = `
+                <h3>Loan ID: ${loan.id}</h3>
+                <p>Amount: ${web3.utils.fromWei(loan.amount, 'ether')} ETH</p>
+                <p>Interest Rate: ${loan.interestRate}%</p>
+                <p>Duration: ${loan.duration} months</p>
+                <p>Status: ${loan.repaid ? 'Repaid' : 'Pending'}</p>
+                <button onclick="fundLoan(${loan.id})">Fund Loan</button>
+                <hr>
+            `;
+            loanRequestsContainer.appendChild(loanElement);
+        }
+
+        async function fundLoan(loanId) {
+            const accounts = await web3.eth.getAccounts();
+            const loan = await loanContract.methods.loans(loanId).call();
+            try {
+                await loanContract.methods.fundLoan(loanId).send({ from: accounts[0], value: loan.amount });
+                alert('Loan Funded!');
+                loadLoanRequests(); // Refresh available loans
+            } catch (error) {
+                console.error('Error funding loan:', error);
+                alert('Error funding loan. Ensure you have enough ETH for gas fees.');
+            }
+        }
+
+        function toggleLoader(show) {
+            const loader = document.getElementById('loader');
+            loader.style.display = show ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    <!-- Loader -->
+    <div id="loader" style="display: none;">Processing... Please wait.</div>
+
+    <!-- Login Section -->
+    <section id="loginSection">
+        <h1>Login</h1>
+        <button onclick="connectMetaMask()">Login with MetaMask</button>
+    </section>
+
+    <!-- Home Section -->
+    <section id="homeSection" style="display: none;">
+        <h1>Welcome to the Lending Platform</h1>
+        <h2>Select Your Role:</h2>
+        <button onclick="showSection('borrowerDashboard')">Borrower</button>
+        <button onclick="showSection('lenderDashboard')">Lender</button>
+    </section>
+
+    <!-- Borrower Dashboard Section -->
+    <section id="borrowerDashboard" style="display: none;">
+        <h1>Borrower Dashboard</h1>
+        <form onsubmit="submitLoanRequest(event)">
+            <label for="loanAmount">Loan Amount (ETH):</label>
+            <input type="text" id="loanAmount" required>
+            
+            <label for="interestRate">Interest Rate (%):</label>
+            <input type="text" id="interestRate" required>
+
+            <label for="loanDuration">Loan Duration (months):</label>
+            <input type="text" id="loanDuration" required>
+
+            <button type="submit">Submit Loan Request</button>
+        </form>
+        <h2>Your Loan Requests:</h2>
+        <div id="borrowerLoanRequests"></div>
+    </section>
+
+    <!-- Lender Dashboard Section -->
+    <section id="lenderDashboard" style="display: none;">
+        <h1>Lender Dashboard</h1>
+        <h2>Available Loan Requests:</hThe issue you are experiencing where the dashboard goes blank after selecting "Borrower" might be due to a JavaScript error, missing DOM elements, or incorrect section visibility logic. To resolve this, let's try the following steps:
+
+### 1. **Check for JavaScript Errors**
+Open your browser's console by right-clicking on the page, selecting **Inspect**, and navigating to the **Console** tab. Once there, check for any error messages that appear when you click "Borrower". Any JavaScript errors should show up, and this will help narrow down the problem.
+
+### 2. **Verify Section IDs and CSS**
+Ensure that the HTML IDs you are using (`borrowerDashboard`, `lenderDashboard`, etc.) match exactly what is referenced in your JavaScript code. Here's how you can do that:
+
+- Double-check the ID names in both your HTML and the JavaScript functions.
+- Also, verify if the sections are correctly being hidden and shown.
+
+For example, ensure that this block of HTML exists:
+
+```html
+<section id="borrowerDashboard" style="display: none;">
+    <!-- Borrower dashboard content goes here -->
+</section>

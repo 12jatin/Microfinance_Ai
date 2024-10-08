@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        window.onload = function() {
+            const userAccount = localStorage.getItem('userAccount');
+            if (!userAccount) {
+                window.location.href = "login.html"; // Redirect to login if not logged in
+            }
+        };
+    </script>
+</head>
+<body>
+    <nav>
+        <a href="home.html">Home</a>
+        <a href="borrower_dashboard.html">Borrower Dashboard</a>
+        <a href="lender_dashboard.html">Lender Dashboard</a>
+    </nav>
+
+    <div id="homeContent">
+        <h1>Welcome to the Lending Platform</h1>
+        <h2>Select Your Role:</h2>
+        <div>
+            <a href="borrower_dashboard.html" class="role-button">Borrower</a>
+            <a href="lender_dashboard.html" class="role-button">Lender</a>
+        </div>
+
+        <h2>Platform Rules</h2>
+        <ul>
+            <li>All users must connect their MetaMask account to access features.</li>
+            <li>Borrowers must provide a valid reason for the loan request.</li>
+            <li>Lenders can review and approve loan requests based on their discretion.</li>
+            <li>Interest rates and terms will be agreed upon between borrowers and lenders.</li>
+            <li>All transactions are subject to blockchain verification.</li>
+        </ul>
+    </div>
+</body>
+</html>
